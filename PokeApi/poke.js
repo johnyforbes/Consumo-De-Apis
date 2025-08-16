@@ -1,32 +1,40 @@
-document.getElementById('form-busqueda').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const nombre = document.getElementById('pokemon').value.toLowerCase().trim();
-    const resultado = document.getElementById('resultado');
+document.getElementById('form-busqueda').addEventListener('submit', function(e) {
+    e.preventDefault(); // Evita que la página se recargue
+
+    // Obtiene el nombre o ID del Pokémon
+    var nombre = document.getElementById('pokemon').value.toLowerCase().trim();
+    var resultado = document.getElementById('resultado');
     resultado.textContent = 'Buscando...';
 
+    // Hace la petición a la API de Pokémon
+    fetch('https://pokeapi.co/api/v2/pokemon/' + nombre)
+        .then(function(respuesta) {
+            if (!respuesta.ok) {
+                throw new Error('Pokémon no encontrado');
+            }
+            return respuesta.json();
+        })
+        .then(function(datos) {
+            // Muestra la información básica del Pokémon
+            var tipos = [];
+            for (var i = 0; i < datos.types.length; i++) {
+                tipos.push(datos.types[i].type.name);
+            }
 
+            var habilidades = [];
+            for (var j = 0; j < datos.abilities.length; j++) {
+                habilidades.push(datos.abilities[j].ability.name);
+            }
 
-
-
-    try {
-        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombre}`);
-        if (!res.ok) throw new Error('Pokémon no encontrado');
-        const datos = await res.json();
-
-        const habilidades = datos.abilities.map(hab => hab.ability.name).join(', ');
-        const tipos = datos.types.map(tipo => tipo.type.name).join(', ');
-        const poderes = datos.stats.map(stat => `<li>${stat.stat.name}: ${stat.base_stat}</li>`).join('');
-
-        resultado.innerHTML = `
-            <div class="carta-pokemon">
-                <img src="${datos.sprites.front_default}" alt="${datos.name}">
-                <h2>${datos.name} (#${datos.id})</h2>
-                <p><strong>Tipo:</strong> ${tipos}</p>
-                <p><strong>Habilidades:</strong> ${habilidades}</p>
-                <ul><strong>Poderes:</strong> ${poderes}</ul>
-            </div>
-        `;
-    } catch (err) {
-        resultado.textContent = 'Pokémon no encontrado.';
-    }
+            resultado.innerHTML = 
+                '<div class="carta-pokemon">' +
+                    '<img src="' + datos.sprites.front_default + '" alt="' + datos.name + '">' +
+                    '<h2>' + datos.name + ' (#' + datos.id + ')</h2>' +
+                    '<p><strong>Tipo:</strong> ' + tipos.join(', ') + '</p>' +
+                    '<p><strong>Habilidades:</strong> ' + habilidades.join(', ') + '</p>' +
+                '</div>';
+        })
+        .catch(function(error) {
+            resultado.textContent = 'Pokémon no encontrado. Intenta con otro nombre o número.';
+        });
 });
